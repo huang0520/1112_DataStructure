@@ -10,17 +10,17 @@ public:
         this->edge_list = vector <vector <int>>(num_node);
     }
 
-    int degree(int u) {return this->edge_list[u].size();}
+    int degree(int u) {return this->edge_list[u - 1].size();}
 
     char nieghbor(int u, int v){
-        auto &i = this->edge_list[u];
+        auto &i = this->edge_list[u - 1];
         if(find(i.begin(), i.end(), v) != i.end()) return 'Y';
         else return 'N';
     }
 
     void connect(int u, int v){
-        this->edge_list[u].emplace_back(v);
-        this->edge_list[v].emplace_back(u);
+        this->edge_list[u - 1].emplace_back(v);
+        this->edge_list[v - 1].emplace_back(u);
     }
 
 private:
@@ -40,14 +40,14 @@ int main(void){
     graph G(num_node);
 
     // Connect the node
-    for (int i = 0; i < num_edge; i++){
+    while (num_edge--) {
         int u, v;
         cin >> u >> v;
         G.connect(u, v);
     }
 
     // Query
-    for (int i = 0; i < num_query; i++){
+    while (num_query--) {
         char op;
         cin >> op;
 
