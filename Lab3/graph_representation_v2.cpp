@@ -6,7 +6,7 @@ using namespace std;
 
 class graph {
    public:
-    graph(int num_node) { this->edge_list = vector<vector<int>>(num_node); }
+    graph(int num_node) { this->edge_list = deque<deque<int>>(num_node); }
 
     int degree(int u) { return this->edge_list[u - 1].size(); }
 
@@ -24,7 +24,7 @@ class graph {
     }
 
    private:
-    vector<vector<int>> edge_list;
+    deque<deque<int>> edge_list;
 };
 
 int main(void) {

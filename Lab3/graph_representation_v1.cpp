@@ -13,7 +13,7 @@ int main(void){
     cin >> num_node >> num_edge >> num_query;
 
     // Construct the adjency matrix
-    vector <vector <bool>> graph(num_node, vector <bool> (num_node, false));
+    deque <deque <bool>> graph(num_node, deque <bool> (num_node, false));
 
     // Connect the edge
     for (int i = 0, u, v; i < num_edge; i++){
