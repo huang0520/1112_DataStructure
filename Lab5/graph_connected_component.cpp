@@ -1,69 +1,43 @@
-#include <deque>
 #include <iostream>
-#include <queue>
+#include <list>
+#include <vector>
 
 using namespace std;
 
 class Graph {
    public:
-    Graph(int n) : adjacent(deque<deque<int>>(n)) {}
+    Graph() {}
+    Graph(int n) : adjacent(vector<list<int>>(n)) {}
 
     auto connect(int u, int v) -> void {
         adjacent[u].emplace_back(v);
         adjacent[v].emplace_back(u);
     }
 
-    auto display(/* argument */) -> void {
-        for (int i{}; i < adjacent.size(); i++) {
-            cout << "Node: " << i + 1;
-            for (auto j : adjacent[i]) cout << " Edge: " << j + 1 << " ";
-            cout << "\n";
-        }
-    }
+    auto DFS_find() -> int {
+        int num_component{};
+        visited = vector<bool>(adjacent.size(), false);
 
-    deque<deque<int>> adjacent{};
-};
-
-// Check is there any node hasn't be found
-auto check(deque<bool> &found) -> int {
-    for (int i{}; i < found.size(); i++) {
-        if (!found[i]) return i;
-    }
-
-    return -1;
-}
-
-auto find_num_component(Graph graph) -> int {
-    deque<bool> found(graph.adjacent.size());
-    queue<int> next_find;
-    int curr_node{}, n_component{};
-
-    while (curr_node >= 0) {
-        // Stand at the current node
-        next_find.emplace(curr_node);
-        found[curr_node] = true;
-        n_component += 1;
-
-        while (!next_find.empty()) {
-            // Stand at node in front of next_find
-            curr_node = next_find.front();
-            next_find.pop();
-
-            // Find the connected node and push into next_find
-            for (auto i : graph.adjacent[curr_node]) {
-                if (found[i]) continue;
-
-                // Tag the node
-                found[i] = true;
-                next_find.emplace(i);
+        for (int node{}; node < adjacent.size(); node++) {
+            if (!visited[node]) {
+                num_component += 1;
+                DFS(node);
             }
         }
-
-        curr_node = check(found);
+        return num_component;
     }
 
-    return n_component;
-}
+    auto DFS(int n) -> void {
+        visited[n] = true;
+
+        for (auto it : adjacent[n])
+            if (!visited[it]) DFS(it);
+    }
+
+   private:
+    vector<list<int>> adjacent{};
+    vector<bool> visited{};
+};
 
 auto main() -> int {
     // ios optimization
@@ -90,8 +64,7 @@ auto main() -> int {
             graph.connect(u - 1, v - 1);
         }
 
-        cout << find_num_component(graph) << "\n";
-        // graph.display();
+        cout << graph.DFS_find() << "\n";
     }
 
     return 0;
