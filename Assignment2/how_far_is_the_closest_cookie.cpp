@@ -1,65 +1,60 @@
-#include <deque>
 #include <iostream>
 #include <queue>
+#include <vector>
 
 using namespace std;
 
 class Graph {
-    struct node {
-        int distance{-1};
-        bool have_cookie{false};
-        deque<int> adjacent{};
-    };
-
     int num_node{};
-    deque<node> adjacent_list{};
+    vector<vector<int>> adjacent_list{};
+    vector<bool> cookie{};
+    vector<int> distance{};
 
    public:
-    Graph(int n) : num_node{n}, adjacent_list{deque<node>(n)} {}
+    Graph(int n)
+        : num_node{n}, adjacent_list(n), cookie(n, false), distance(n, -1) {}
 
     auto connect(int u, int v) -> void {
-        adjacent_list[u].adjacent.emplace_back(v);
-        adjacent_list[v].adjacent.emplace_back(u);
+        adjacent_list[u].emplace_back(v);
+        adjacent_list[v].emplace_back(u);
     }
 
-    auto put_cookie(int n) -> void { adjacent_list[n].have_cookie = true; }
-
-    auto bfs_find_cookie(int root) -> int {
-        adjacent_list[root].distance = 0;
-
-        deque<int> next_dis{root};
-        deque<bool> found(num_node, false);
-
-        for (int curr{root}, dis{0}; !next_dis.empty(); dis++) {
-            // Push node at the current distance in queue
-            queue<int> next_find{next_dis};
-            next_dis.clear();
-
-            // Find the node at the next distance and push into deque
-            // Tag the found node and denote the distance
-            while (!next_find.empty()) {
-                curr = next_find.front();
-                next_find.pop();
-
-                // If curr node have cookie return curr distance
-                if (adjacent_list[curr].have_cookie) return dis;
-
-                // Denote the distance of curr node
-                adjacent_list[curr].distance = dis;
-
-                // Push adjacent node of curr node into next dis deque
-                for (auto i : adjacent_list[curr].adjacent) {
-                    if (found[i]) continue;
-
-                    found[i] = true;
-                    next_dis.emplace_back(i);
-                }
-            }
-        }
-
-        return -1;
-    }
+    auto adjacent(int n) -> const vector<int>& { return adjacent_list[n]; }
+    auto put_cookie(int n) -> void { cookie[n] = true; }
+    auto is_cookie(int n) -> bool { return cookie[n]; }
+    auto set_dis(int n, int dis) -> void { distance[n] = dis; }
+    auto dis(int n) -> int { return distance[n]; }
+    auto size() -> int { return num_node; }
 };
+
+auto bfs_find_cookie(Graph& graph, int root) -> int {
+    vector<bool> found(graph.size(), false);
+
+    queue<int> next_find{};
+    next_find.emplace(root);
+
+    int curr{}, dis{};
+    graph.set_dis(root, 0);
+
+    while (!next_find.empty()) {
+        curr = next_find.front();
+        next_find.pop();
+
+        dis = graph.dis(curr);
+
+        if (graph.is_cookie(curr)) return dis;
+
+        for (auto i : graph.adjacent(curr)) {
+            if (found[i]) continue;
+
+            found[i] = true;
+            graph.set_dis(i, dis + 1);
+            next_find.emplace(i);
+        }
+    }
+
+    return -1;
+}
 
 auto main() -> int {
     // ios optimization
@@ -97,7 +92,7 @@ auto main() -> int {
             graph.put_cookie(n - 1);
         }
 
-        int dis = graph.bfs_find_cookie(root - 1);
+        int dis = bfs_find_cookie(graph, root - 1);
 
         if (dis == -1)
             cout << "SAD\n";
