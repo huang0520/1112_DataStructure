@@ -7,7 +7,7 @@ using namespace std;
 class Graph {
    public:
     Graph() {}
-    Graph(int n) : adjacent(vector<list<int>>(n)) {}
+    Graph(int n) : adjacent(deque<deque<int>>(n)) {}
 
     auto connect(int u, int v) -> void {
         adjacent[u].emplace_back(v);
@@ -16,7 +16,7 @@ class Graph {
 
     auto DFS_find() -> int {
         int num_component{};
-        visited = vector<bool>(adjacent.size(), false);
+        visited = deque<bool>(adjacent.size(), false);
 
         for (int node{}; node < adjacent.size(); node++) {
             if (!visited[node]) {
@@ -35,8 +35,8 @@ class Graph {
     }
 
    private:
-    vector<list<int>> adjacent{};
-    vector<bool> visited{};
+    deque<deque<int>> adjacent{};
+    deque<bool> visited{};
 };
 
 auto main() -> int {
