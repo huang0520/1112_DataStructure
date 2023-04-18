@@ -1,114 +1,88 @@
-#include <algorithm>
 #include <iostream>
 #include <vector>
 
 using namespace std;
 
-/*
-Direct graph
-    adjacent list
-node:
-    int index
-    int value = 0
-    list parent
-    bool visited = false
-*/
 class Graph {
-    struct node {
-        node() {}
-        node(int n) : index{n} {}
-        vector<int> parent{};
-        bool visited = false;
-        int val{}, index{};
-    };
-
     int num_node{};
-    vector<node> adjacent{};
+    vector<int> value{};
+    vector<vector<int>> adjacent{};
 
    public:
-    Graph(int n) : adjacent(n) {
-        for (int i = 0; i < n; i++) adjacent[i] = node{i};
-    }
+    Graph(int n) : num_node{n}, value(n, 0), adjacent(n) {}
 
-    auto connect(int u, int v) -> void { adjacent[v].parent.emplace_back(u); }
+    auto connect(int u, int v) -> void { adjacent[v].emplace_back(u); }
 
-    auto assign_val(int n, int val) -> void { adjacent[n].val = val; }
+    auto assign_val(int n, int val) -> void { value[n] = val; }
 
     auto display() -> void {
-        int i = 1;
-        for (auto &node : adjacent) {
-            cout << "Node " << i << " val: " << node.val << " parent cell:";
-            for (auto cell : node.parent) cout << " " << cell + 1;
+        int i = 0;
+        for (auto &cell : adjacent) {
+            cout << "Node " << i + 1 << " val: " << value[i] << " parent cell:";
+            for (auto parent : cell) cout << " " << parent + 1;
             cout << "\n";
             i++;
         }
     }
 
-    /*
-    Traverse the node and do DFS along parents
-    if no parent:
-        safe
-    if parent has been visited:
-        parent safe: safe, val += parent val
-        parent unsafe: unsafe, val = -1
-    if parent has not been visited, do DFS on parent.
-    */
-    auto dfs(node &node, vector<int> &history) -> int {
+    auto dfs(int node, vector<bool> &visited, vector<bool> &history) -> int {
         // If node has been visited in this recursion
-        if (find(history.begin(), history.end(), node.index) != history.end()) {
+        if (history[node]) {
             // Node unsafe
-            node.val = -1;
+            value[node] = -1;
             return -1;
         }
 
-        history.emplace_back(node.index);
+        // Mark this node
+        history[node] = true;
 
         // If node has been visited but is in other recursion
-        if (node.visited) return node.val;
+        if (visited[node]) return value[node];
 
         // Node hasn't been visited
-        node.visited = true;
+        visited[node] = true;
 
         // No parent
-        if (node.parent.empty()) return node.val;
+        if (adjacent[node].empty()) return value[node];
 
         // Has parent
-        for (auto cell : node.parent) {
+        for (auto parent : adjacent[node]) {
             // Get parent value
-            int val = dfs(adjacent[cell], history);
+            int val = dfs(parent, visited, history);
 
             // Parent unsafe, node also unsafe
             // Parent safe, plus it value to node value
             if (val == -1) {
-                node.val = -1;
-                return node.val;
-            } else {
-                node.val += val;
-                continue;
-            }
+                value[node] = -1;
+                return value[node];
+            } else
+                value[node] += val;
         }
-        return node.val;
+        return value[node];
     }
 
     auto print_cell_value() -> void {
-        vector<bool> visited{};
-        for (auto node : adjacent) {
+        vector<bool> visited(num_node, false);
+        vector<bool> history(num_node, false);
+
+        for (int node = 0; node < num_node; node++) {
             // Node has been visited
-            if (node.visited and node.val != -1) {
-                cout << node.val << "\n";
-                continue;
-            } else if (node.visited and node.val == -1) {
-                cout << "#REF!\n";
+            if (visited[node]) {
+                if (value[node] == -1)
+                    cout << "#REF!\n";
+                else
+                    cout << value[node] << "\n";
                 continue;
             }
 
-            vector<int> history{};
-            int val = dfs(node, history);
+            int val = dfs(node, visited, history);
 
-            if (val != -1)
-                cout << node.val << "\n";
-            else if (val == -1)
+            if (val == -1)
                 cout << "#REF!\n";
+            else
+                cout << val << "\n";
+
+            fill(history.begin(), history.end(), false);
         }
     }
 };
