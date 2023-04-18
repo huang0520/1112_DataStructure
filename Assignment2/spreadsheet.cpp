@@ -5,7 +5,7 @@ using namespace std;
 
 class Graph {
     int num_node{};
-    vector<int> value{};
+    vector<long long> value{};
     vector<vector<int>> adjacent{};
 
    public:
@@ -15,74 +15,51 @@ class Graph {
 
     auto assign_val(int n, int val) -> void { value[n] = val; }
 
-    auto display() -> void {
-        int i = 0;
-        for (auto &cell : adjacent) {
-            cout << "Node " << i + 1 << " val: " << value[i] << " parent cell:";
-            for (auto parent : cell) cout << " " << parent + 1;
-            cout << "\n";
-            i++;
-        }
-    }
-
-    auto dfs(int node, vector<bool> &visited, vector<bool> &history) -> int {
+    auto dfs(int node, vector<bool> &visited, vector<bool> &inPath)
+        -> long long {
         // If node has been visited in this recursion
-        if (history[node]) {
+        if (inPath[node]) {
             // Node unsafe
             value[node] = -1;
             return -1;
         }
 
-        // Mark this node
-        history[node] = true;
-
         // If node has been visited but is in other recursion
         if (visited[node]) return value[node];
 
-        // Node hasn't been visited
         visited[node] = true;
+        inPath[node] = true;
 
-        // No parent
-        if (adjacent[node].empty()) return value[node];
-
-        // Has parent
+        // If no parent, loop will not active
         for (auto parent : adjacent[node]) {
             // Get parent value
-            int val = dfs(parent, visited, history);
+            long long val = dfs(parent, visited, inPath);
 
             // Parent unsafe, node also unsafe
             // Parent safe, plus it value to node value
             if (val == -1) {
                 value[node] = -1;
-                return value[node];
+                break;
             } else
                 value[node] += val;
         }
+
+        // Node might be other path ancestor, but it does not mean it is cycle
+        inPath[node] = false;
         return value[node];
     }
 
     auto print_cell_value() -> void {
         vector<bool> visited(num_node, false);
-        vector<bool> history(num_node, false);
+        vector<bool> inPath(num_node, false);
 
         for (int node = 0; node < num_node; node++) {
-            // Node has been visited
-            if (visited[node]) {
-                if (value[node] == -1)
-                    cout << "#REF!\n";
-                else
-                    cout << value[node] << "\n";
-                continue;
-            }
-
-            int val = dfs(node, visited, history);
+            long long val = dfs(node, visited, inPath);
 
             if (val == -1)
                 cout << "#REF!\n";
             else
                 cout << val << "\n";
-
-            fill(history.begin(), history.end(), false);
         }
     }
 };
