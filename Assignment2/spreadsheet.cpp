@@ -49,7 +49,7 @@ class Graph {
         return value[node];
     }
 
-    auto print_cell_value() -> void {
+    auto isDAG() -> void {
         vector<bool> visited(num_node, false);
         vector<bool> inPath(num_node, false);
 
@@ -110,7 +110,7 @@ auto main() -> int {
             graph.connect(val[i] - 1, val[0] - 1);
     }
 
-    graph.print_cell_value();
+    graph.isDAG();
 
     return 0;
 }
