@@ -5,24 +5,21 @@
 
 using namespace std;
 
-auto display(vector<int> &arr) -> void {
-    for (auto var : arr) {
-        cout << var << " ";
-    }
-    cout << "\n";
-}
+auto partition(vector<int> &arr, int left, int right) -> int {
+    if (left >= right) return left;
 
-auto partition(vector<int> &arr, int left, int right, int k) -> int {
-    if (left >= right) return arr[left];
+    auto pivot = (left + right) / 2;
 
     // choose pivot (median of three)
-    auto middle = (left + right) / 2;
-    vector<int> three{arr[left], arr[middle], arr[right]};
-    sort(three.begin(), three.end(), greater());
-    arr[left] = three[0];
-    arr[middle] = three[1];
-    arr[right] = three[2];
-    auto pivot = middle;
+    if (left - right >= 2) {
+        auto middle = (left + right) / 2;
+        vector<int> three{arr[left], arr[middle], arr[right]};
+        sort(three.begin(), three.end(), greater());
+        arr[left] = three[0];
+        arr[middle] = three[1];
+        arr[right] = three[2];
+        pivot = middle;
+    }
 
     // swap pivot and rightest element
     swap(arr[pivot], arr[right]);
@@ -30,7 +27,7 @@ auto partition(vector<int> &arr, int left, int right, int k) -> int {
 
     auto lp = left, rp = right - 1;
 
-    while (true) {
+    while (lp < rp) {
         // Move left pointer until its value larger than pivot
         while (arr[lp] >= arr[pivot] and lp < right) lp++;
 
@@ -38,31 +35,33 @@ auto partition(vector<int> &arr, int left, int right, int k) -> int {
         while (arr[rp] <= arr[pivot] and rp > left) rp--;
 
         // Check whether right pointer smaller than left pointer
-        if (lp >= rp) {
-            swap(arr[lp], arr[pivot]);
-            pivot = lp;
-            break;
-        } else
-            swap(arr[lp], arr[rp]);
+        if (lp < rp) swap(arr[lp], arr[rp]);
     }
+    swap(arr[lp], arr[pivot]);
 
-    // pivot is larger than k - 1 numbers
-    if (pivot == k - 1) return arr[pivot];
-    // the number of numbers pivot greater than is less than k - 1
-    else if (pivot < k - 1)
-        return partition(arr, pivot + 1, right, k);
-    // the number of number pivot greater than is more than k - 1
-    else
-        return partition(arr, left, pivot - 1, k);
+    return lp;
+}
+
+auto kth_max(vector<int> &arr, int k) -> int {
+    int left = 0, right = arr.size() - 1;
+
+    while (left <= right) {
+        auto pivot = partition(arr, left, right);
+
+        // pivot is larger than k - 1 numbers
+        if (pivot + 1 == k) return arr[pivot];
+        // the number of numbers pivot greater than is less than k - 1
+        else if (pivot + 1 < k)
+            left = pivot + 1;
+        // the number of number pivot greater than is more than k - 1
+        else
+            right = pivot - 1;
+    }
 
     return -1;
 }
 
 auto main() -> int {
-    // ios optimization
-    ios::sync_with_stdio(false);
-    cin.tie(0);
-
     int seq_len, k;
     cin >> seq_len >> k;
 
@@ -75,7 +74,7 @@ auto main() -> int {
 
     for (int i = k; i <= seq_len; i++) {
         vector<int> tmp_arr(arr.begin(), arr.begin() + i);
-        cout << partition(tmp_arr, 0, tmp_arr.size() - 1, k) << "\n";
+        cout << kth_max(tmp_arr, k) << "\n";
     }
 
     return 0;
