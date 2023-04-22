@@ -5,56 +5,56 @@
 using namespace std;
 
 class Graph {
-    int num_node{};
-    vector<vector<int>> adjacent_list{};
-    vector<bool> cookie{};
+    struct node {
+        vector<int> adj_node{};
+        bool hasCookie{false};
+    };
+
+    vector<node> adj_{};
     vector<int> distance{};
 
    public:
-    Graph(int n)
-        : num_node{n}, adjacent_list(n), cookie(n, false), distance(n, -1) {}
+    Graph(int n) : adj_(n, node{}), distance(n, -1) {}
 
     auto connect(int u, int v) -> void {
-        adjacent_list[u].emplace_back(v);
-        adjacent_list[v].emplace_back(u);
+        adj_[u].adj_node.emplace_back(v);
+        adj_[v].adj_node.emplace_back(u);
     }
 
-    auto adjacent(int n) -> const vector<int>& { return adjacent_list[n]; }
-    auto put_cookie(int n) -> void { cookie[n] = true; }
-    auto is_cookie(int n) -> bool { return cookie[n]; }
-    auto set_dis(int n, int dis) -> void { distance[n] = dis; }
-    auto dis(int n) -> int { return distance[n]; }
-    auto size() -> int { return num_node; }
-};
+    auto put_cookie(int n) -> void { adj_[n].hasCookie = true; }
 
-auto bfs_find_cookie(Graph& graph, int root) -> int {
-    vector<bool> found(graph.size(), false);
+    auto cookie_dis(int root) -> int {
+        // Store the visited node
+        vector<bool> visited(adj_.size(), false);
 
-    queue<int> next_find{};
-    next_find.emplace(root);
+        queue<int> next_find{};
+        next_find.emplace(root);
 
-    int curr{}, dis{};
-    graph.set_dis(root, 0);
+        // Set the distance of root node 0
+        distance[root] = 0;
 
-    while (!next_find.empty()) {
-        curr = next_find.front();
-        next_find.pop();
+        while (!next_find.empty()) {
+            int curr = next_find.front();
+            next_find.pop();
 
-        dis = graph.dis(curr);
+            // If the current node has cookie return its distance to root
+            if (adj_[curr].hasCookie) return distance[curr];
 
-        if (graph.is_cookie(curr)) return dis;
+            // visited the adjacent node and denote their distance as which of
+            // current node + 1
+            for (auto node : adj_[curr].adj_node) {
+                if (visited[node]) continue;
 
-        for (auto i : graph.adjacent(curr)) {
-            if (found[i]) continue;
-
-            found[i] = true;
-            graph.set_dis(i, dis + 1);
-            next_find.emplace(i);
+                visited[node] = true;
+                distance[node] = distance[curr] + 1;
+                next_find.emplace(node);
+            }
         }
-    }
 
-    return -1;
-}
+        // If the component which root on has no cookies
+        return -1;
+    }
+};
 
 auto main() -> int {
     // ios optimization
@@ -92,7 +92,7 @@ auto main() -> int {
             graph.put_cookie(n - 1);
         }
 
-        int dis = bfs_find_cookie(graph, root - 1);
+        int dis = graph.cookie_dis(root - 1);
 
         if (dis == -1)
             cout << "SAD\n";
