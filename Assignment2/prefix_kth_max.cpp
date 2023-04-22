@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <vector>
@@ -13,12 +12,18 @@ auto partition(vector<int> &arr, int left, int right) -> int {
     // choose pivot (median of three)
     if (left - right >= 2) {
         auto middle = (left + right) / 2;
-        vector<int> three{arr[left], arr[middle], arr[right]};
-        sort(three.begin(), three.end(), greater());
-        arr[left] = three[0];
-        arr[middle] = three[1];
-        arr[right] = three[2];
-        pivot = middle;
+        bool a = arr[left] >= arr[middle];
+        bool b = arr[middle] >= arr[left];
+        bool c = arr[left] >= arr[right];
+
+        // middle is median
+        if (a and b) pivot = middle;
+        // right is median
+        else if ((b and c) or (!b and !c))
+            pivot = right;
+        // left is median
+        else if ((a and c) or (!a and !c))
+            pivot = left;
     }
 
     // swap pivot and rightest element
@@ -27,7 +32,7 @@ auto partition(vector<int> &arr, int left, int right) -> int {
 
     auto lp = left, rp = right - 1;
 
-    while (lp < rp) {
+    while (true) {
         // Move left pointer until its value larger than pivot
         while (arr[lp] >= arr[pivot] and lp < right) lp++;
 
@@ -35,9 +40,12 @@ auto partition(vector<int> &arr, int left, int right) -> int {
         while (arr[rp] <= arr[pivot] and rp > left) rp--;
 
         // Check whether right pointer smaller than left pointer
-        if (lp < rp) swap(arr[lp], arr[rp]);
+        if (lp >= rp) {
+            swap(arr[lp], arr[pivot]);
+            break;
+        } else
+            swap(arr[lp], arr[rp]);
     }
-    swap(arr[lp], arr[pivot]);
 
     return lp;
 }
