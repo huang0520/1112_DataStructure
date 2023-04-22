@@ -1,65 +1,64 @@
 #include <iostream>
+#include <queue>
 #include <vector>
 
 using namespace std;
 
 class Graph {
+    struct node {
+        vector<int> child{};
+        vector<int> parent{};
+    };
+
     int num_node{};
     vector<long long> value{};
-    vector<vector<int>> adjacent{};
+    vector<node> adjacent{};
 
    public:
-    Graph(int n) : num_node{n}, value(n, 0), adjacent(n) {}
+    Graph(int n) : num_node{n}, value(n, 0), adjacent(n, node{}) {}
 
-    auto connect(int u, int v) -> void { adjacent[v].emplace_back(u); }
+    auto connect(int u, int v) -> void {
+        adjacent[v].parent.emplace_back(u);
+        adjacent[u].child.emplace_back(v);
+    }
 
     auto assign_val(int n, int val) -> void { value[n] = val; }
 
-    auto dfs(int node, vector<bool> &visited, vector<bool> &inPath)
-        -> long long {
-        // If node has been visited in this recursion
-        if (inPath[node]) {
-            // Node unsafe
-            value[node] = -1;
-            return -1;
+    auto print_cells_value() -> void {
+        vector<int> inDegree(num_node);
+        queue<int> next_visit{};
+
+        // Calculate in degree of nodes
+        for (int i = 0; i <= num_node - 1; i++) {
+            inDegree[i] = adjacent[i].parent.size();
+
+            // If node has no parent push in to queue
+            if (inDegree[i] == 0) next_visit.emplace(i);
         }
 
-        // If node has been visited but is in other recursion
-        if (visited[node]) return value[node];
+        // Kahn algorithm
+        while (!next_visit.empty()) {
+            auto curr = next_visit.front();
+            next_visit.pop();
 
-        visited[node] = true;
-        inPath[node] = true;
+            for (auto child : adjacent[curr].child) {
+                // Remove edge between curr node
+                inDegree[child]--;
 
-        // If no parent, loop will not active
-        for (auto parent : adjacent[node]) {
-            // Get parent value
-            long long val = dfs(parent, visited, inPath);
+                // Add the curr value to its child
+                value[child] += value[curr];
 
-            // Parent unsafe, node also unsafe
-            // Parent safe, plus it value to node value
-            if (val == -1) {
-                value[node] = -1;
-                break;
-            } else
-                value[node] += val;
+                // If in degree of child = 0, push into queue
+                if (inDegree[child] == 0) next_visit.emplace(child);
+            }
         }
 
-        // Node might be other path ancestor, but it does not mean it is cycle
-        inPath[node] = false;
-        return value[node];
-    }
-
-    auto isDAG() -> void {
-        vector<bool> visited(num_node, false);
-        vector<bool> inPath(num_node, false);
-
-        for (int node = 0; node < num_node; node++) {
-            long long val = dfs(node, visited, inPath);
-
-            if (val == -1)
-                cout << "#REF!\n";
+        // Print the cell value
+        for (int i = 0; i <= num_node - 1; i++) {
+            if (inDegree[i] == 0)
+                cout << value[i] << "\n";
             else
-                cout << val << "\n";
+                cout << "#REF!\n";
         }
     }
 };
@@ -110,7 +109,7 @@ auto main() -> int {
             graph.connect(val[i] - 1, val[0] - 1);
     }
 
-    graph.isDAG();
+    graph.print_cells_value();
 
     return 0;
 }
