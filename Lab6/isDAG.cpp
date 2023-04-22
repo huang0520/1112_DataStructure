@@ -1,45 +1,64 @@
+#include <array>
 #include <iostream>
+#include <queue>
 #include <vector>
 
 using namespace std;
 
 class Graph {
+    struct node {
+        vector<int> parent{};
+        vector<int> child{};
+    };
+
     int num_node{};
-    vector<vector<int>> adjacent{};
+    vector<node> adj_{};
 
    public:
-    Graph(int n) : num_node{n}, adjacent(n) {}
+    Graph(int n) : num_node{n}, adj_(n, node{}) {}
 
-    auto connect(int u, int v) -> void { adjacent[v].emplace_back(u); }
-
-    auto dfs(int node, vector<bool> &visited, vector<bool> &inPath) -> bool {
-        // If node has been visited in this path
-        if (inPath[node]) return false;
-
-        // If node has been visited but is in other recursion
-        if (visited[node]) return true;
-
-        visited[node] = true;
-        inPath[node] = true;
-
-        // If no parent, loop will not active
-        for (auto parent : adjacent[node])
-            // If the graph is not DAG before, just return the result
-            if (!dfs(parent, visited, inPath)) return false;
-
-        // Node might be other path ancestor, but it does not mean it is cycle
-        inPath[node] = false;
-        return true;
+    auto connect(int u, int v) -> void {
+        adj_[u].child.emplace_back(v);
+        adj_[v].parent.emplace_back(u);
     }
 
+    // Kahn algorithm
     auto isDAG() -> bool {
-        vector<bool> visited(num_node, false);
-        vector<bool> inPath(num_node, false);
+        vector<int> inDegree(num_node);
+        queue<int> next_visit{};
+        int visited = 0;
 
-        for (int node = 0; node < num_node; node++)
-            if (!dfs(node, visited, inPath)) return false;
+        // Find number of parents of the node
+        int i = 0;
+        for (auto &node : adj_) {
+            inDegree[i] = node.parent.size();
+            i++;
+        }
 
-        return true;
+        // Find the source of graph
+        i = 0;
+        for (auto &in : inDegree) {
+            if (in == 0) next_visit.emplace(i);
+            i++;
+        }
+
+        while (!next_visit.empty()) {
+            auto curr = next_visit.front();
+            next_visit.pop();
+
+            // Reduce the inDegree of the node connecting to the node who's
+            // inDegree is 0
+            for (auto child : adj_[curr].child) {
+                inDegree[child]--;
+                if (inDegree[child] == 0) next_visit.emplace(child);
+            }
+            visited++;
+        }
+
+        if (visited != num_node)
+            return false;
+        else
+            return true;
     }
 };
 
