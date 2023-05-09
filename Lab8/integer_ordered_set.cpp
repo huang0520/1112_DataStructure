@@ -25,7 +25,22 @@ class BST {
     }
 
     auto del(int n) -> void {
-        if (del_helper(n, root)) size--;
+        auto &node = search_helper(n, root);
+
+        // not found the node that has value n
+        if (not node) return;
+
+        // node has no child or only right
+        if (not node->left) node = std::move(node->right);
+
+        // node has 2 child or only left
+        else {
+            auto tmp_right{std::move(node->right)};
+            node = std::move(node->left);
+            if (tmp_right) ins_node(tmp_right);
+        }
+
+        size--;
     }
 
     auto search(int n) -> bool { return search_helper(n, root) ? true : false; }
@@ -81,26 +96,6 @@ class BST {
         else {
             return search_helper(n, n < node->val ? node->left : node->right);
         }
-    }
-
-    auto del_helper(int n, unique_ptr<Node> &node) -> bool {
-        // not found the node that has value n
-        if (not node) return false;
-
-        if (n != node->val)
-            return del_helper(n, n < node->val ? node->left : node->right);
-
-        // node has no child or only right
-        if (not node->left) node = std::move(node->right);
-
-        // node has 2 child or only left
-        else {
-            auto tmp_right{std::move(node->right)};
-            node = std::move(node->left);
-            find_max(node)->right = std::move(tmp_right);
-        }
-
-        return true;
     }
 
     auto find_max(unique_ptr<Node> &node) -> unique_ptr<Node> & {
