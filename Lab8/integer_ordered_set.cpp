@@ -20,18 +20,15 @@ class BST {
     BST() {}
 
     auto ins(int n) -> void {
-        auto &pos{search(n)};
-        if (not pos) {
-            pos = make_unique<Node>(n);
-            size++;
-        }
+        auto new_node = make_unique<Node>(n);
+        if (ins_node(new_node)) size++;
     }
 
     auto del(int n) -> void {
         if (del_helper(n, root)) size--;
     }
 
-    auto search(int n) -> unique_ptr<Node> & { return search_helper(n, root); }
+    auto search(int n) -> bool { return search_helper(n, root) ? true : false; }
 
     auto lower_bound(int n) -> int {
         auto curr{root.get()};
@@ -39,7 +36,7 @@ class BST {
 
         while (curr) {
             if (n < curr->val) {
-                lb = lb == -1 ? curr->val : min(curr->val, lb);
+                lb = curr->val;
                 curr = curr->left.get();
             } else if (n > curr->val) {
                 curr = curr->right.get();
@@ -57,7 +54,7 @@ class BST {
 
         while (curr) {
             if (n < curr->val) {
-                ub = ub == -1 ? curr->val : min(curr->val, ub);
+                ub = curr->val;
                 curr = curr->left.get();
             } else if (n >= curr->val) {
                 curr = curr->right.get();
@@ -69,8 +66,17 @@ class BST {
     auto get_size() -> int { return size; }
 
    private:
+    auto ins_node(unique_ptr<Node> &node) -> bool {
+        auto &pos = search_helper(node->val, root);
+        if (not pos) {
+            pos = std::move(node);
+            return true;
+        }
+        return false;
+    }
+
     auto search_helper(int n, unique_ptr<Node> &node) -> unique_ptr<Node> & {
-        if (node == nullptr or n == node->val)
+        if (not node or n == node->val)
             return node;
         else {
             return search_helper(n, n < node->val ? node->left : node->right);
@@ -89,9 +95,9 @@ class BST {
 
         // node has 2 child or only left
         else {
-            auto &sub_max{find_max(node->left)};
-            sub_max->right = std::move(node->right);
-            node = std::move(sub_max);
+            auto tmp_right{std::move(node->right)};
+            node = std::move(node->left);
+            find_max(node)->right = std::move(tmp_right);
         }
 
         return true;
@@ -127,11 +133,10 @@ auto main() -> int {
         }
 
         else if (op == 'S') {
-            auto &node = bst.search(val);
-            if (not node)
-                cout << "NO\n";
-            else
+            if (bst.search(val))
                 cout << "YES\n";
+            else
+                cout << "NO\n";
         }
 
         else if (op == 'L') {
