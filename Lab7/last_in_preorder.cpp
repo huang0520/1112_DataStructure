@@ -1,60 +1,63 @@
 #include <iostream>
-#include <memory>
 #include <stack>
 #include <vector>
 
 using namespace std;
 
 struct node {
-    node(int n) : index{n} {}
-
     int index{};
-    shared_ptr<node> parent{};
-    shared_ptr<node> lchild{};
-    shared_ptr<node> rchild{};
+    node* parent;
+    node* lchild;
+    node* rchild;
+
+    node() {}
+    node(int n) : index{n} {}
 };
 
 auto main() -> int {
     int num_node;
-    shared_ptr<node> last;
-    stack<shared_ptr<node>> traversal;
+    stack<node&> traversal;
     cin >> num_node;
 
-    vector<shared_ptr<node>> tree(num_node);
-
-    for (int i = 1; i < num_node + 1; i++) tree[i - 1] = make_shared<node>(i);
+    vector<node*> tree(num_node, new node());
 
     // Connect tree
-    for (auto &node : tree) {
+    for (int i = 0; i < num_node; i++) {
         int l, r;
         cin >> l >> r;
 
+        tree[i]->index = i + 1;
+
         if (l != -1) {
-            node->lchild = tree[l - 1];
-            node->lchild->parent = node;
+            l--;
+            tree[l]->parent = tree[i];
         }
         if (r != -1) {
-            node->rchild = tree[r - 1];
-            node->rchild->parent = node;
+            r--;
+            tree[r]->parent = tree[i];
         }
+
+        tree[i] = node{i};
     }
 
     // Find root and push to stack
-    for (auto &node : tree)
-        if (node->parent == nullptr) traversal.emplace(node);
+    for (int i = 0; i < num_node; i++)
+        if (tree[i].parent == -1) traversal.emplace(i);
 
     // Preorder traversal
     while (!traversal.empty()) {
         auto curr = traversal.top();
         traversal.pop();
 
-        if (curr->rchild != nullptr) traversal.emplace(curr->rchild);
-        if (curr->lchild != nullptr) traversal.emplace(curr->lchild);
+        if (tree[curr].child.second != -1)
+            traversal.emplace(tree[curr].child.second);
+        if (tree[curr].child.first != -1)
+            traversal.emplace(tree[curr].child.first);
 
         last = curr;
     }
 
-    cout << last->index << "\n";
+    cout << tree[last].index << "\n";
 
     return 0;
 }
