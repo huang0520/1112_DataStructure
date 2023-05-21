@@ -4,60 +4,49 @@
 
 using namespace std;
 
-struct node {
-    int index{};
-    node* parent;
-    node* lchild;
-    node* rchild;
-
-    node() {}
-    node(int n) : index{n} {}
-};
-
 auto main() -> int {
     int num_node;
-    stack<node&> traversal;
     cin >> num_node;
+    vector<pair<ssize_t, ssize_t>> child(num_node, {-1, -1});
+    vector<ssize_t> parent(num_node, -1);
 
-    vector<node*> tree(num_node, new node());
-
-    // Connect tree
-    for (int i = 0; i < num_node; i++) {
-        int l, r;
+    // Construct graph
+    for (ssize_t i = 0; i < num_node; i++) {
+        ssize_t l, r;
         cin >> l >> r;
 
-        tree[i]->index = i + 1;
-
         if (l != -1) {
-            l--;
-            tree[l]->parent = tree[i];
-        }
-        if (r != -1) {
-            r--;
-            tree[r]->parent = tree[i];
+            child[i].first = l - 1;
+            parent[l - 1] = i;
         }
 
-        tree[i] = node{i};
+        if (r != -1) {
+            child[i].second = r - 1;
+            parent[r - 1] = i;
+        }
     }
 
-    // Find root and push to stack
-    for (int i = 0; i < num_node; i++)
-        if (tree[i].parent == -1) traversal.emplace(i);
+    ssize_t ans{};
+    stack<ssize_t> traversal;
+
+    // find root
+    for (ssize_t i = 0; i < num_node; i++)
+        if (parent[i] == -1) traversal.emplace(i);
 
     // Preorder traversal
     while (!traversal.empty()) {
         auto curr = traversal.top();
         traversal.pop();
 
-        if (tree[curr].child.second != -1)
-            traversal.emplace(tree[curr].child.second);
-        if (tree[curr].child.first != -1)
-            traversal.emplace(tree[curr].child.first);
+        // Push right child first
+        // Left child second
+        if (child[curr].second != -1) traversal.emplace(child[curr].second);
+        if (child[curr].first != -1) traversal.emplace(child[curr].first);
 
-        last = curr;
+        ans = curr;
     }
 
-    cout << tree[last].index << "\n";
+    cout << ans + 1 << "\n";
 
     return 0;
 }
