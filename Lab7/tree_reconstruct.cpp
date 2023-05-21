@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <stack>
@@ -7,70 +6,78 @@
 
 using namespace std;
 
-class Solution {
-    struct TreeNode {
-        int val;
-        unique_ptr<TreeNode> left;
-        unique_ptr<TreeNode> right;
-        TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
-    };
+vector<pair<ssize_t, ssize_t>> child;
+unordered_map<ssize_t, ssize_t> inIdx_tbl;
+ssize_t preIdx{};
 
-    unordered_map<int, int> inIndex;
-    int preIdx = 0;
+auto construct(vector<ssize_t> &pre, vector<ssize_t> &in, ssize_t start,
+               ssize_t end) -> ssize_t {
+    if (start > end) return -1;
 
-   public:
-    auto construct(vector<int> &pre, vector<int> &in, int start, int end)
-        -> unique_ptr<TreeNode> {
-        if (start > end) return nullptr;
+    auto sub_root{pre[preIdx]};
+    auto inIdx = inIdx_tbl[sub_root];
 
-        int inIdx = inIndex[pre[preIdx]];
-        auto new_node = make_unique<TreeNode>(in[inIdx]);
+    preIdx++;
 
-        preIdx++;
+    child[sub_root].first = construct(pre, in, start, inIdx - 1);
+    child[sub_root].second = construct(pre, in, inIdx + 1, end);
 
-        new_node->left = construct(pre, in, start, inIdx - 1);
-        new_node->right = construct(pre, in, inIdx + 1, end);
+    return sub_root;
+}
 
-        return new_node;
-    }
-
-    auto build(vector<int> &pre, vector<int> &in) -> unique_ptr<TreeNode> {
-        for (int i = 0; i < (int)pre.size(); i++) inIndex[in[i]] = i;
-        return construct(pre, in, 0, (int)pre.size() - 1);
-    }
-
-    auto post(unique_ptr<TreeNode> &root) -> void {
-        stack<unique_ptr<TreeNode>> next;
-        next.emplace(move(root));
-
-        while (!next.empty()) {
-            auto &curr = next.top();
-
-            if (!curr->left and !curr->right) {
-                cout << curr->val << " ";
-                next.pop();
-                continue;
-            }
-
-            if (curr->right) next.emplace(move(curr->right));
-            if (curr->left) next.emplace(move(curr->left));
-        }
-        return;
-    }
-};
+auto display() -> void {
+    for (auto [l, r] : child) cout << l + 1 << " " << r + 1 << "\n";
+}
 
 auto main() -> int {
     int num_node;
     cin >> num_node;
 
-    vector<int> pre(num_node), in(num_node);
+    vector<ssize_t> pre(num_node), in(num_node);
+    child = vector<pair<ssize_t, ssize_t>>(num_node);
+    stack<ssize_t> traversal;
 
-    for (auto &var : pre) cin >> var;
-    for (auto &var : in) cin >> var;
+    // Read
+    for (auto &var : pre) {
+        ssize_t n;
+        cin >> n;
+        var = n - 1;
+    }
+    for (auto &var : in) {
+        ssize_t n;
+        cin >> n;
+        var = n - 1;
+    };
 
-    Solution sol;
-    auto root = sol.build(pre, in);
-    sol.post(root);
+    // Build in index search table
+    for (ssize_t i = 0; i < num_node; i++) inIdx_tbl[in[i]] = i;
+
+    auto root = construct(pre, in, 0, pre.size() - 1);
+    traversal.emplace(root);
+
+    // display();
+
+    // Postorder
+    while (!traversal.empty()) {
+        auto curr = traversal.top();
+
+        // If curr has no child print and pop
+        if (child[curr].first == -1 and child[curr].second == -1) {
+            cout << curr + 1 << " ";
+            traversal.pop();
+            continue;
+        }
+
+        // Push curr rchild(first), lchild and remove them from child list
+        if (child[curr].second != -1) {
+            traversal.emplace(child[curr].second);
+            child[curr].second = -1;
+        }
+        if (child[curr].first != -1) {
+            traversal.emplace(child[curr].first);
+            child[curr].first = -1;
+        };
+    }
 
     return 0;
 }
